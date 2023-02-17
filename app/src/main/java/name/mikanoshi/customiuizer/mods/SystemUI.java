@@ -104,6 +104,7 @@ import name.mikanoshi.customiuizer.R;
 import name.mikanoshi.customiuizer.utils.BatteryIndicator;
 import name.mikanoshi.customiuizer.utils.Helpers;
 import name.mikanoshi.customiuizer.utils.Helpers.MethodHook;
+import name.mikanoshi.customiuizer.utils.StatusBarTextIcon;
 
 public class SystemUI {
     private final static String StatusBarCls = Helpers.isTPlus() ? "com.android.systemui.statusbar.phone.CentralSurfacesImpl" : "com.android.systemui.statusbar.phone.StatusBar";
@@ -317,24 +318,14 @@ public class SystemUI {
                 }
             });
         }
-        Class <?> NetworkSpeedViewClass = XposedHelpers.findClass("com.android.systemui.statusbar.views.NetworkSpeedView", lpparam.classLoader);
-        Helpers.findAndHookMethod(NetworkSpeedViewClass, "getSlot", new MethodHook() {
-            @Override
-            protected void before(MethodHookParam param) throws Throwable {
-                Object customSlot = XposedHelpers.getAdditionalInstanceField(param.thisObject, "mCustomSlot");
-                if (customSlot != null) {
-                    param.setResult(customSlot);
-                }
-            }
-        });
     }
 
     private static TextView createBatteryDetailView(Context mContext, LinearLayout.LayoutParams lp) {
-        TextView batteryView = (TextView) LayoutInflater.from(mContext).inflate(statusbarTextIconLayoutResId, null);
+        StatusBarTextIcon batteryView = (StatusBarTextIcon) LayoutInflater.from(mContext).inflate(statusbarTextIconLayoutResId, null);
         XposedHelpers.setObjectField(batteryView, "mVisibilityByDisableInfo", 0);
         XposedHelpers.setObjectField(batteryView, "mVisibleByController", true);
         XposedHelpers.setObjectField(batteryView, "mShown", true);
-        XposedHelpers.setAdditionalInstanceField(batteryView, "mCustomSlot", "battery_detail");
+        batteryView.subSlot = "battery_detail";
         Resources res = mContext.getResources();
         int styleId = res.getIdentifier("TextAppearance.StatusBar.Clock", "style", "com.android.systemui");
         batteryView.setTextAppearance(styleId);
@@ -1116,11 +1107,10 @@ public class SystemUI {
                 @Override
                 protected void before(MethodHookParam param) throws Throwable {
                     TextView meter = (TextView) param.thisObject;
-                    String slot = (String) XposedHelpers.callMethod(param.thisObject, "getSlot");
                     if (leftViewId == 0) {
                         leftViewId = meter.getResources().getIdentifier("drip_network_speed_view", "id", lpparam.packageName);
                     }
-                    if (slot.equals("network_speed") && meter.getId() != leftViewId) {
+                    if (meter.getId() != leftViewId) {
                         param.args[0] = false;
                     }
                 }
@@ -1253,8 +1243,7 @@ public class SystemUI {
                 @Override
                 protected void before(MethodHookParam param) throws Throwable {
                     TextView meter = (TextView) param.thisObject;
-                    if ((meter.getTag() == null || !"slot_text_icon".equals(meter.getTag()))
-                        && XposedHelpers.getAdditionalInstanceField(param.thisObject, "inited") == null) {
+                    if (XposedHelpers.getAdditionalInstanceField(param.thisObject, "inited") == null) {
                         XposedHelpers.setAdditionalInstanceField(param.thisObject, "inited", true);
                         int fixedWidth = MainModule.mPrefs.getInt("system_netspeed_fixedcontent_width", 10);
                         if (fixedWidth > 10) {
@@ -1281,67 +1270,65 @@ public class SystemUI {
                     || MainModule.mPrefs.getBoolean("system_detailednetspeed_fakedualrow");
                 TextView meter = (TextView)param.thisObject;
                 if (meter == null) return;
-                if (meter.getTag() == null || !"slot_text_icon".equals(meter.getTag())) {
-                    int fontSize = MainModule.mPrefs.getInt("system_netspeed_fontsize", 13);
-                    if (dualRow) {
-                        if (fontSize > 23 || fontSize == 13) fontSize = 16;
-                    }
-                    else {
-                        if (fontSize < 20 && fontSize != 13) fontSize = 27;
-                    }
-                    if (dualRow || fontSize != 13) {
-                        meter.setTextSize(TypedValue.COMPLEX_UNIT_DIP, fontSize * 0.5f);
-                    }
-                    if (MainModule.mPrefs.getBoolean("system_netspeed_bold")) {
-                        meter.setTypeface(Typeface.DEFAULT_BOLD);
-                    }
+                int fontSize = MainModule.mPrefs.getInt("system_netspeed_fontsize", 13);
+                if (dualRow) {
+                    if (fontSize > 23 || fontSize == 13) fontSize = 16;
+                }
+                else {
+                    if (fontSize < 20 && fontSize != 13) fontSize = 27;
+                }
+                if (dualRow || fontSize != 13) {
+                    meter.setTextSize(TypedValue.COMPLEX_UNIT_DIP, fontSize * 0.5f);
+                }
+                if (MainModule.mPrefs.getBoolean("system_netspeed_bold")) {
+                    meter.setTypeface(Typeface.DEFAULT_BOLD);
+                }
 
-                    Resources res = meter.getResources();
+                Resources res = meter.getResources();
 
-                    int leftMargin = MainModule.mPrefs.getInt("system_netspeed_leftmargin", 0);
-                    leftMargin = (int)TypedValue.applyDimension(
+                int leftMargin = MainModule.mPrefs.getInt("system_netspeed_leftmargin", 0);
+                leftMargin = (int)TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    leftMargin * 0.5f,
+                    res.getDisplayMetrics()
+                );
+                int rightMargin = MainModule.mPrefs.getInt("system_netspeed_rightmargin", 0);
+                rightMargin = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    rightMargin * 0.5f,
+                    res.getDisplayMetrics()
+                );
+                int topMargin = 0;
+                int verticalOffset = MainModule.mPrefs.getInt("system_netspeed_verticaloffset", 8);
+                if (verticalOffset != 8) {
+                    float marginTop = TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_DIP,
-                        leftMargin * 0.5f,
+                        (verticalOffset - 8) * 0.5f,
                         res.getDisplayMetrics()
                     );
-                    int rightMargin = MainModule.mPrefs.getInt("system_netspeed_rightmargin", 0);
-                    rightMargin = (int) TypedValue.applyDimension(
-                        TypedValue.COMPLEX_UNIT_DIP,
-                        rightMargin * 0.5f,
-                        res.getDisplayMetrics()
-                    );
-                    int topMargin = 0;
-                    int verticalOffset = MainModule.mPrefs.getInt("system_netspeed_verticaloffset", 8);
-                    if (verticalOffset != 8) {
-                        float marginTop = TypedValue.applyDimension(
-                            TypedValue.COMPLEX_UNIT_DIP,
-                            (verticalOffset - 8) * 0.5f,
-                            res.getDisplayMetrics()
-                        );
-                        topMargin = (int) (marginTop);
-                    }
-                    meter.setPaddingRelative(leftMargin, topMargin, rightMargin, 0);
+                    topMargin = (int) (marginTop);
+                }
+                meter.setPaddingRelative(leftMargin, topMargin, rightMargin, 0);
 
-                    int align = MainModule.mPrefs.getStringAsInt("system_detailednetspeed_align", 1);
-                    if (align == 2) {
-                        meter.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
-                    }
-                    else if (align == 3) {
-                        meter.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                    }
-                    else if (align == 4) {
-                        meter.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
-                    }
+                int align = MainModule.mPrefs.getStringAsInt("system_detailednetspeed_align", 1);
+                if (align == 2) {
+                    meter.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
+                }
+                else if (align == 3) {
+                    meter.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                }
+                else if (align == 4) {
+                    meter.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
+                }
 
-                    if (dualRow) {
-                        float spacing = 0.9f;
-                        meter.setSingleLine(false);
-                        meter.setMaxLines(2);
-                        if (fontSize > 8.5f) {
-                            spacing = 0.85f;
-                        }
-                        meter.setLineSpacing(0, spacing);
+                if (dualRow) {
+                    float spacing = 0.9f;
+                    meter.setSingleLine(false);
+                    meter.setMaxLines(2);
+                    if (fontSize > 8.5f) {
+                        spacing = 0.85f;
                     }
+                    meter.setLineSpacing(0, spacing);
                 }
             }
         });
