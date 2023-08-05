@@ -780,8 +780,8 @@ public class Launcher {
 	}
 
 	public static void UnlockGridsRes() {
-		MainModule.resHooks.setObjectReplacement("com.miui.home", "integer", "config_cell_count_x", 3);
-		MainModule.resHooks.setObjectReplacement("com.miui.home", "integer", "config_cell_count_y", 4);
+		MainModule.resHooks.setObjectReplacement("com.miui.home", "integer", "config_cell_count_x", 5);
+		MainModule.resHooks.setObjectReplacement("com.miui.home", "integer", "config_cell_count_y", 7);
 		MainModule.resHooks.setObjectReplacement("com.miui.home", "integer", "config_cell_count_x_min", 3);
 		MainModule.resHooks.setObjectReplacement("com.miui.home", "integer", "config_cell_count_y_min", 4);
 		MainModule.resHooks.setObjectReplacement("com.miui.home", "integer", "config_cell_count_x_max", 8);
