@@ -434,7 +434,7 @@ public class SystemUI {
                                     }
                                     else if (opt == 4) {
                                         float voltVal = Integer.parseInt(props.getProperty("POWER_SUPPLY_VOLTAGE_NOW")) / 1000f / 1000f;
-                                        String simpleWatt = String.format(Locale.getDefault(), "%.2f", Math.abs(voltVal * rawCurr) / 1000);
+                                        String simpleWatt = String.format(Locale.getDefault(), "%.2f", voltVal * rawCurr / 1000);
                                         String splitChar = MainModule.mPrefs.getBoolean("system_statusbar_batterytempandcurrent_singlerow") ? " " : "\n";
                                         batteryInfo = simpleTempVal + tempUnit + splitChar + simpleWatt + powerUnit;
                                         if (MainModule.mPrefs.getBoolean("system_statusbar_batterytempandcurrent_reverseorder")) {
@@ -442,11 +442,11 @@ public class SystemUI {
                                         }
                                     } else if (opt == 2) {
                                         float voltVal = Integer.parseInt(props.getProperty("POWER_SUPPLY_VOLTAGE_NOW")) / 1000f / 1000f;
-                                        String simpleWatt = String.format(Locale.getDefault(), "%.2f", Math.abs(voltVal * rawCurr) / 1000);
+                                        String simpleWatt = String.format(Locale.getDefault(), "%.2f", voltVal * rawCurr / 1000);
                                         batteryInfo = simpleWatt + powerUnit;
                                     } else if (opt == 5) {
                                         float voltVal = Integer.parseInt(props.getProperty("POWER_SUPPLY_VOLTAGE_NOW")) / 1000f / 1000f;
-                                        String simpleWatt = String.format(Locale.getDefault(), "%.2f", Math.abs(voltVal * rawCurr) / 1000);
+                                        String simpleWatt = String.format(Locale.getDefault(), "%.2f", voltVal * rawCurr / 1000);
                                         String splitChar = MainModule.mPrefs.getBoolean("system_statusbar_batterytempandcurrent_singlerow") ? " " : "\n";
                                         batteryInfo = currVal + currUnit + splitChar + simpleWatt + powerUnit;
                                         if (MainModule.mPrefs.getBoolean("system_statusbar_batterytempandcurrent_reverseorder")) {
