@@ -1,0 +1,50 @@
+name: Android Ci Release
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - ".github/**"
+      - "!.github/workflows/**"
+      - ".idea/"
+      - "doc/*"
+      - "*.md"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - uses: gradle/gradle-build-action@v2
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Sign APP
+        if: success()
+        id: sign_app
+        uses: victorbnl/build-signed-apk@main
+        with:
+          keystore_b64: ${{ secrets.SIGN_KEYSTORE }}
+          keystore_password: ${{ secrets.SIGN_STORE_PASS }}
+          key_alias: ${{ secrets.SIGN_KEY_ALIAS }}
+          key_password: ${{ secrets.SIGN_KEY_PASS }}
+
+      - uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: Signed app bundle
+          path: app/build/outputs/apk/release/app-release.apk
