@@ -1,13 +1,5 @@
 apply plugin: 'com.android.application'
 
-//def acraVersion = '5.7.0'
-def keystorePropertiesFile = rootProject.file("../keystore.properties")
-def keystoreProperties = new Properties()
-keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-def sFile = file(keystoreProperties['storeFile'])
-def sPassword = keystoreProperties['storePassword']
-def kAlias = keystoreProperties['keyAlias']
-def kPassword = keystoreProperties['keyPassword']
 def lastVersion = 63
 def lastVersionName = "23.06.27"
 
@@ -17,16 +9,6 @@ if (gradle.startParameter.taskNames.contains(":app:assembleDevelop")) {
 
 android {
     namespace "name.mikanoshi.customiuizer"
-    signingConfigs {
-        v2 {
-            storeFile sFile
-            storePassword sPassword
-            keyAlias kAlias
-            keyPassword kPassword
-            v1SigningEnabled false
-            v2SigningEnabled true
-        }
-    }
     compileSdkVersion 33
     defaultConfig {
         applicationId "name.monwf.customiuizer"
